@@ -2,7 +2,7 @@
 
 class CallbackMetdata {
     public index: number;
-    public functor: any[];
+    public functor: Function[];
 }
 interface Map {
     [key: string]: CallbackMetdata;
@@ -11,7 +11,15 @@ class blockProcessing {
     private callbacks: Map;
     private defaultTimeout: number = 30000;
 
-    public registerCallbacks(processingType: string, callback) {
+    public Rejected: Function;
+    public Completed: Function;
+
+    constructor(rejected: Function, completed: Function) {
+        this.Rejected = rejected;
+        this.Completed = completed;
+    }
+
+    public registerCallbacks(processingType: string, callback : Function) {
         if (this.callbacks[processingType] === undefined) {
             this.callbacks[processingType] = new CallbackMetdata();
         }
@@ -21,20 +29,23 @@ class blockProcessing {
     public startProcessing(processingType: string) {
         var dfd = jQuery.Deferred();
 
-        // TODO: Notify the user that we are starting the process.
         var callbackMetadata = this.callbacks[processingType];
         callbackMetadata.index = 0;
-        this.processNext(processingType, dfd);
+        this.processNext(callbackMetadata, dfd);
 
         $.when(dfd).then(
             function (status) {
-                // TODO: Notify user that we timed out
+                if (this.Rejected) {
+                    this.Rejected();
+                }
             },
             function (status) {
-                // TODO: Notify user on error
+                if (this.Completed) {
+                    this.Completed();
+                }
             },
             function (status) {
-                this.processNext(processingType, dfd);
+                this.processNext(callbackMetadata, dfd);
             }
         );
         setTimeout(function () {
@@ -47,13 +58,11 @@ class blockProcessing {
         }, this.defaultTimeout);
     }
 
-    private processNext(processingType: string, dfd: any) {
-        var callbackInfo = this.callbacks[processingType];
-
-        if (callbackInfo.index > callbackInfo.functor.length - 1) {
+    private processNext(callbackMetadata: CallbackMetdata, dfd: JQueryDeferred<any>) {
+        if (callbackMetadata.index > callbackMetadata.functor.length - 1) {
             dfd.resolve();
             return;
         }
-        callbackInfo.functor[callbackInfo.index++](dfd);
+        callbackMetadata.functor[callbackMetadata.index++](dfd);
     }
 }

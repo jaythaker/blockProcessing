@@ -7,8 +7,10 @@ var CallbackMetdata = /** @class */ (function () {
     return CallbackMetdata;
 }());
 var blockProcessing = /** @class */ (function () {
-    function blockProcessing() {
+    function blockProcessing(rejected, completed) {
         this.defaultTimeout = 30000;
+        this.Rejected = rejected;
+        this.Completed = completed;
     }
     blockProcessing.prototype.registerCallbacks = function (processingType, callback) {
         if (this.callbacks[processingType] === undefined) {
@@ -18,16 +20,19 @@ var blockProcessing = /** @class */ (function () {
     };
     blockProcessing.prototype.startProcessing = function (processingType) {
         var dfd = jQuery.Deferred();
-        // TODO: Notify the user that we are starting the process.
         var callbackMetadata = this.callbacks[processingType];
         callbackMetadata.index = 0;
-        this.processNext(processingType, dfd);
+        this.processNext(callbackMetadata, dfd);
         $.when(dfd).then(function (status) {
-            // TODO: Notify user that we timed out
+            if (this.Rejected) {
+                this.Rejected();
+            }
         }, function (status) {
-            // TODO: Notify user on error
+            if (this.Completed) {
+                this.Completed();
+            }
         }, function (status) {
-            this.processNext(processingType, dfd);
+            this.processNext(callbackMetadata, dfd);
         });
         setTimeout(function () {
             if (dfd.state() === "pending") {
@@ -38,13 +43,12 @@ var blockProcessing = /** @class */ (function () {
             }
         }, this.defaultTimeout);
     };
-    blockProcessing.prototype.processNext = function (processingType, dfd) {
-        var callbackInfo = this.callbacks[processingType];
-        if (callbackInfo.index > callbackInfo.functor.length - 1) {
+    blockProcessing.prototype.processNext = function (callbackMetadata, dfd) {
+        if (callbackMetadata.index > callbackMetadata.functor.length - 1) {
             dfd.resolve();
             return;
         }
-        callbackInfo.functor[callbackInfo.index++](dfd);
+        callbackMetadata.functor[callbackMetadata.index++](dfd);
     };
     return blockProcessing;
 }());
