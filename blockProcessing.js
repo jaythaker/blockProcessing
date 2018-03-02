@@ -1,55 +1,51 @@
-blockProcessing = {
-    callbacks: [],
-    currentIndex: 0,
-    defaultTimeout: 30000
-};
-
-blockProcessing.registerCallbacks = function (processingType, callback) {
-    if (blockProcessing.callbacks[processingType] === undefined) {
-    	blockProcessing.callbacks[processingType] = [];
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var $ = require("jquery");
+var CallbackMetdata = /** @class */ (function () {
+    function CallbackMetdata() {
     }
-    blockProcessing.callbacks[processingType].push(callback);
-};
-
-blockProcessing.resetProcessingState = function () {
-    blockProcessing.currentIndex = 0;
-};
-
-blockProcessing.processNext = function (processingType, dfd) {
-	if (blockProcessing.currentIndex > blockProcessing.callbacks[processingType].length - 1) {
-        	dfd.resolve();
-        	return;
+    return CallbackMetdata;
+}());
+var blockProcessing = /** @class */ (function () {
+    function blockProcessing() {
+        this.defaultTimeout = 30000;
+    }
+    blockProcessing.prototype.registerCallbacks = function (processingType, callback) {
+        if (this.callbacks[processingType] === undefined) {
+            this.callbacks[processingType] = new CallbackMetdata();
         }
-	blockProcessing.callbacks[processingType][blockProcessing.currentIndex++](dfd);
-};
-
-blockProcessing.startProcessing = function (processingType) {
-	var dfd = jQuery.Deferred();
-
-	// TODO: Notify the user that we are starting the process.
-	blockProcessing.resetProcessingState();
-
-	blockProcessing.processNext(processingType, dfd);
-
-	$.when(dfd).then(
-        function (status) {
-		// TODO: Notify user that we timed out
-        },
-        function (status) {
-		// TODO: Notify user on error
-	},
-        function (status) {
-        	blockProcessing.processNext(processingType, dfd);
+        this.callbacks[processingType].functor.push(callback);
+    };
+    blockProcessing.prototype.startProcessing = function (processingType) {
+        var dfd = jQuery.Deferred();
+        // TODO: Notify the user that we are starting the process.
+        var callbackMetadata = this.callbacks[processingType];
+        callbackMetadata.index = 0;
+        this.processNext(processingType, dfd);
+        $.when(dfd).then(function (status) {
+            // TODO: Notify user that we timed out
+        }, function (status) {
+            // TODO: Notify user on error
+        }, function (status) {
+            this.processNext(processingType, dfd);
+        });
+        setTimeout(function () {
+            if (dfd.state() === "pending") {
+                dfd.reject();
+            }
+            else {
+                dfd.resolve();
+            }
+        }, this.defaultTimeout);
+    };
+    blockProcessing.prototype.processNext = function (processingType, dfd) {
+        var callbackInfo = this.callbacks[processingType];
+        if (callbackInfo.index > callbackInfo.functor.length - 1) {
+            dfd.resolve();
+            return;
         }
-    );
-
-    setTimeout(function () {
-	if (dfd.state() === "pending") {
-		dfd.reject();
-	}
-	else {
-		dfd.resolve();
-	}
-	}, blockProcessing.defaultTimeout);
-
-};
+        callbackInfo.functor[callbackInfo.index++](dfd);
+    };
+    return blockProcessing;
+}());
+//# sourceMappingURL=blockProcessing.js.map
