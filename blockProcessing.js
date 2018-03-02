@@ -17,15 +17,17 @@ var blockProcessing = /** @class */ (function () {
         this.callbacks[processingType].functor.push(callback);
     };
     blockProcessing.prototype.startProcessing = function (processingType) {
-        var dfd = jQuery.Deferred();
+        var dfd = $.Deferred();
         var callbackMetadata = this.callbacks[processingType];
         callbackMetadata.index = 0;
         this.processNext(callbackMetadata, dfd);
         $.when(dfd).then(function (status) {
+            // This will be last function called when any of the chained function will reject it.
             if (this.Rejected) {
                 this.Rejected();
             }
         }, function (status) {
+            // This will be the last function call when the chain has completed processing.
             if (this.Completed) {
                 this.Completed();
             }
