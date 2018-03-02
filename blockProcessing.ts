@@ -1,14 +1,12 @@
-﻿import $  = require("jquery")
+﻿// Import external library references
+import $ = require("jquery")
 
-class CallbackMetdata {
-    public index: number;
-    public functor: Function[];
-}
-interface Map {
-    [key: string]: CallbackMetdata;
-}
+// Import internal library references
+import { CallbackMetdata } from "./common"
+import { map } from "./common"
+
 class blockProcessing {
-    private callbacks: Map;
+    private callbacks: map<string, CallbackMetdata>;
     private defaultTimeout: number = 30000;
 
     public Rejected: Function;

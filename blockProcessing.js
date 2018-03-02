@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// Import external library references
 var $ = require("jquery");
-var CallbackMetdata = /** @class */ (function () {
-    function CallbackMetdata() {
-    }
-    return CallbackMetdata;
-}());
+// Import internal library references
+var common_1 = require("./common");
 var blockProcessing = /** @class */ (function () {
     function blockProcessing(rejected, completed) {
         this.defaultTimeout = 30000;
@@ -14,7 +12,7 @@ var blockProcessing = /** @class */ (function () {
     }
     blockProcessing.prototype.registerCallbacks = function (processingType, callback) {
         if (this.callbacks[processingType] === undefined) {
-            this.callbacks[processingType] = new CallbackMetdata();
+            this.callbacks[processingType] = new common_1.CallbackMetdata();
         }
         this.callbacks[processingType].functor.push(callback);
     };
